@@ -57,9 +57,9 @@
                           DisplayMemberPath="Name" SelectedValuePath="Id" SelectedIndex="0" Margin="4"/>
             </StackPanel>
             
-            <Button x:Name="btnDownload" Grid.Row="1" Content="Start Download" Margin="5" Padding="20,10"
+            <Button x:Name="btnDownload" Grid.Row="1" Content="Start Download" Margin="5" Padding="20,5"
                     Click="BtnDownload_OnClick"/>
-            <Button x:Name="btnCancel" Grid.Row="2" Content="Stop" Margin="5" Padding="20,10"
+            <Button x:Name="btnCancel" Grid.Row="2" Content="Stop" Margin="5" Padding="20,5"
                     Click="BtnCancel_OnClick"/>
             <Button x:Name="btnCleanHistory" Grid.Row="3" Content="Clean Download History" Margin="5" Padding="20,2"
                     Click="BtnCleanHistory_OnClick"/>

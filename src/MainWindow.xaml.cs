@@ -286,10 +286,10 @@ namespace DoubanMusicDownloader
         /// </summary>
         private void LoadDownloadHistory()
         {
-            // Load stored download list
-            using (var fs = new FileStream("musicdb", FileMode.OpenOrCreate, FileAccess.Read))
+            try
             {
-                try
+                // Load stored download list
+                using (var fs = new FileStream("musicdb", FileMode.OpenOrCreate, FileAccess.Read))
                 {
                     using (TextReader tr = new StreamReader(fs))
                     {
@@ -300,13 +300,13 @@ namespace DoubanMusicDownloader
                                 TypeNameHandling = TypeNameHandling.All,
                                 TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
                             });
-                        this.MusicDB = (Dictionary<string, Music>)c;
+                        this.MusicDB = (Dictionary<string, Music>)c ?? new Dictionary<string, Music>();
                     }
                 }
-                catch (Exception)
-                {
-                    this.MusicDB = new Dictionary<string, Music>();
-                }
+            }
+            catch (Exception)
+            {
+                this.MusicDB = new Dictionary<string, Music>();
             }
         }
 
