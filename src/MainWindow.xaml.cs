@@ -11,18 +11,21 @@ namespace DoubanMusicDownloader
     using System.ComponentModel;
     using System.IO;
     using System.Net;
+    using System.Runtime.Serialization.Formatters;
     using System.Threading;
     using System.Windows;
     using System.Windows.Forms;
     using System.Windows.Interop;
-    using System.Xml.Serialization;
 
     using DoubanMusicDownloader.Properties;
 
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
+    using MessageBox = System.Windows.MessageBox;
+
     /// <summary>
-    ///     Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -50,7 +53,7 @@ namespace DoubanMusicDownloader
         /// <summary>
         /// The music db.
         /// </summary>
-        private List<Music> MusicDB;
+        private Dictionary<string, Music> MusicDB;
 
         #endregion
 
@@ -170,7 +173,15 @@ namespace DoubanMusicDownloader
                         this.DownloadMusic();
                         if (this.DownloadingList.Count == 0)
                         {
-                            this.RefreshList();
+                            try
+                            {
+                                this.RefreshList();
+                            }
+                            catch (Exception ex)
+                            {
+                                this.Dispatcher.Invoke(new Action(() => MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error)));
+                                break;
+                            }
                         }
 
                         Thread.Sleep(100);
@@ -179,11 +190,11 @@ namespace DoubanMusicDownloader
                     this.Dispatcher.Invoke(
                         new Action(
                             () =>
-                                {
-                                    this.btnCleanHistory.IsEnabled = true;
-                                    this.btnDownload.IsEnabled = true;
-                                    this.btnCancel.IsEnabled = false;
-                                }));
+                            {
+                                this.btnCleanHistory.IsEnabled = true;
+                                this.btnDownload.IsEnabled = true;
+                                this.btnCancel.IsEnabled = false;
+                            }));
                 };
             this.btnCancel.IsEnabled = true;
             this.btnCleanHistory.IsEnabled = false;
@@ -241,7 +252,7 @@ namespace DoubanMusicDownloader
                 Thread.Sleep(100);
             }
 
-            this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Clear(); }));
+            this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Clear()));
         }
 
         /// <summary>
@@ -254,28 +265,41 @@ namespace DoubanMusicDownloader
         {
             var list = new List<Music>();
 
-            WebRequest request = WebRequest.Create(string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
-            request.Credentials = CredentialCache.DefaultCredentials;
-            WebResponse response = request.GetResponse();
-            using (var sr = new StreamReader(response.GetResponseStream()))
+            try
             {
-                string json = sr.ReadToEnd();
-                dynamic musiList = JObject.Parse(json);
-
-                foreach (dynamic mu in musiList.song)
+                WebRequest request = WebRequest.Create(
+                    string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
+                request.Credentials = CredentialCache.DefaultCredentials;
+                request.Timeout = 5000;
+                WebResponse response = request.GetResponse();
+                using (var sr = new StreamReader(response.GetResponseStream()))
                 {
-                    var music = new Music
-                                    {
-                                        Url = mu.url, 
-                                        AlbumPicture = mu.picture, 
-                                        AlbumTitle = mu.albumtitle, 
-                                        Artist = mu.artist, 
-                                        Title = mu.title, 
-                                        PublicTime = mu.public_time, 
-                                        Publisher = mu.company
-                                    };
-                    list.Add(music);
+                    string json = sr.ReadToEnd();
+                    dynamic musicList = JObject.Parse(json);
+
+                    foreach (dynamic mu in musicList.song)
+                    {
+                        var music = new Music
+                                        {
+                                            Url = mu.url,
+                                            AlbumPicture = mu.picture,
+                                            AlbumTitle = mu.albumtitle,
+                                            Artist = mu.artist,
+                                            Title = mu.title,
+                                            PublicTime = mu.public_time,
+                                            Publisher = mu.company
+                                        };
+                        list.Add(music);
+                    }
                 }
+            }
+            catch (WebException e)
+            {
+                throw e;
+            }
+            catch
+            {
+                // ignore exception on get response and parse json data
             }
 
             return list;
@@ -287,16 +311,25 @@ namespace DoubanMusicDownloader
         private void LoadDownloadHistory()
         {
             // Load stored download list
-            using (var fs = new FileStream("musicdb.xml", FileMode.OpenOrCreate, FileAccess.Read))
+            using (var fs = new FileStream("musicdb", FileMode.OpenOrCreate, FileAccess.Read))
             {
-                var x = new XmlSerializer(typeof(List<Music>));
                 try
                 {
-                    this.MusicDB = x.Deserialize(fs) as List<Music>;
+                    using (TextReader tr = new StreamReader(fs))
+                    {
+                        object c = JsonConvert.DeserializeObject(
+                            tr.ReadToEnd(),
+                            new JsonSerializerSettings
+                            {
+                                TypeNameHandling = TypeNameHandling.All,
+                                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                            });
+                        this.MusicDB = (Dictionary<string, Music>)c;
+                    }
                 }
                 catch (Exception)
                 {
-                    this.MusicDB = new List<Music>();
+                    this.MusicDB = new Dictionary<string, Music>();
                 }
             }
         }
@@ -306,14 +339,16 @@ namespace DoubanMusicDownloader
         /// </summary>
         private void RefreshList()
         {
-            this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Clear(); }));
-            foreach (Music music in this.GetMusicList())
-            {
-                if (!this.MusicDB.Exists(p => p.Equals(music)))
-                {
-                    this.MusicDB.Add(music);
+            this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Clear()));
 
-                    this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Add(music); }));
+            var musicList = this.GetMusicList();
+            foreach (Music music in musicList)
+            {
+                if (!this.MusicDB.ContainsKey(music.FileName))
+                {
+                    this.MusicDB.Add(music.FileName, music);
+
+                    this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Add(music)));
                 }
             }
 
@@ -325,10 +360,20 @@ namespace DoubanMusicDownloader
         /// </summary>
         private void SaveDownloadHistory()
         {
-            using (var fs = new FileStream("musicdb.xml", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("musicdb", FileMode.Create, FileAccess.Write))
             {
-                var x = new XmlSerializer(typeof(List<Music>));
-                x.Serialize(fs, this.MusicDB);
+                string json = JsonConvert.SerializeObject(
+                    this.MusicDB,
+                    Formatting.Indented,
+                    new JsonSerializerSettings
+                    {
+                        TypeNameHandling = TypeNameHandling.All,
+                        TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                    });
+                using (TextWriter tw = new StreamWriter(fs))
+                {
+                    tw.Write(json);
+                }
             }
         }
 
