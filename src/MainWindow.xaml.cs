@@ -1,26 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <summary>
+//   Interaction logic for MainWindow.xaml
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace DoubanMusicDownloader
 {
+    using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Net;
     using System.Threading;
+    using System.Windows;
     using System.Windows.Forms;
     using System.Windows.Interop;
-    using System.Windows.Threading;
     using System.Xml.Serialization;
 
     using DoubanMusicDownloader.Properties;
@@ -28,43 +22,43 @@ namespace DoubanMusicDownloader
     using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    ///     Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static int TaskCount = 0;
+        #region Static Fields
 
+        /// <summary>
+        /// The task count.
+        /// </summary>
+        private static int TaskCount;
+
+        #endregion
+
+        #region Fields
+
+        /// <summary>
+        /// The background worker.
+        /// </summary>
+        private readonly BackgroundWorker bw = new BackgroundWorker { WorkerSupportsCancellation = true };
+
+        /// <summary>
+        /// The download folder.
+        /// </summary>
         private string DownloadFolder = string.Empty;
+
+        /// <summary>
+        /// The music db.
+        /// </summary>
         private List<Music> MusicDB;
-        private BackgroundWorker bw = new BackgroundWorker()
-                                          {
-                                              WorkerSupportsCancellation = true
-                                          };
 
-        public MusicList DownloadingList { get; set; }
-        public int SelectedChannel { get; set; }
+        #endregion
 
-        public List<Channel> Channels
-        {
-            get
-            {
-                return new List<Channel>()
-                           {
-                               new Channel(0, "公共 MHz"),
-                               new Channel(1, "华语 MHz"),
-                               new Channel(2, "欧美 MHz"),
-                               new Channel(3, "70 MHz"),
-                               new Channel(4, "80 MHz"),
-                               new Channel(5, "90 MHz"),
-                               new Channel(6, "粤语 MHz"),
-                               new Channel(7, "摇滚 MHz"),
-                               new Channel(8, "民谣 MHz"),
-                               new Channel(9, "轻音乐 MHz"),
-                               new Channel(10, "电影原声 MHz")
-                           };
-            }
-        }
+        #region Constructors and Destructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// </summary>
         public MainWindow()
         {
             this.DownloadingList = new MusicList();
@@ -77,55 +71,129 @@ namespace DoubanMusicDownloader
             this.LoadDownloadHistory();
         }
 
-        #region Event Handlers
+        #endregion
 
-        private void BtnDownload_OnClick(object sender, RoutedEventArgs e)
+        #region Public Properties
+
+        /// <summary>
+        /// Gets the channels.
+        /// </summary>
+        public List<Channel> Channels
         {
-            FolderBrowserDialog dlg = new FolderBrowserDialog()
+            get
             {
-                ShowNewFolderButton = true
-            };
-            HwndSource source = PresentationSource.FromVisual(this) as HwndSource;
-            var win = new OldWindow(source.Handle);
-            if (dlg.ShowDialog(win) != System.Windows.Forms.DialogResult.OK) return;
-            DownloadFolder = dlg.SelectedPath;
-
-
-            this.bw.DoWork += (o, arg) =>
-            {
-                while (!bw.CancellationPending)
-                {
-                    DownloadMusic();
-                    if (this.DownloadingList.Count == 0) RefleshList();
-                    Thread.Sleep(100);
-                }
-
-                this.Dispatcher.Invoke(new Action(() =>
-                {
-                    this.btnCleanHistory.IsEnabled = true;
-                    this.btnDownload.IsEnabled = true;
-                    this.btnCancel.IsEnabled = false;
-                }));
-            };
-            this.btnCancel.IsEnabled = true;
-            this.btnCleanHistory.IsEnabled = false;
-            this.btnDownload.IsEnabled = false;
-            this.bw.RunWorkerAsync();
+                return new List<Channel>
+                           {
+                               new Channel(0, "公共 MHz"), 
+                               new Channel(1, "华语 MHz"), 
+                               new Channel(2, "欧美 MHz"), 
+                               new Channel(3, "70 MHz"), 
+                               new Channel(4, "80 MHz"), 
+                               new Channel(5, "90 MHz"), 
+                               new Channel(6, "粤语 MHz"), 
+                               new Channel(7, "摇滚 MHz"), 
+                               new Channel(8, "民谣 MHz"), 
+                               new Channel(9, "轻音乐 MHz"), 
+                               new Channel(10, "电影原声 MHz")
+                           };
+            }
         }
 
+        /// <summary>
+        /// Gets or sets the downloading list.
+        /// </summary>
+        public MusicList DownloadingList { get; set; }
+
+        /// <summary>
+        /// Gets or sets the selected channel.
+        /// </summary>
+        public int SelectedChannel { get; set; }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// The button cancel on click event handler.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The e.
+        /// </param>
         private void BtnCancel_OnClick(object sender, RoutedEventArgs e)
         {
             this.bw.CancelAsync();
         }
 
+        /// <summary>
+        /// The button clean history on click event handler.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The e.
+        /// </param>
         private void BtnCleanHistory_OnClick(object sender, RoutedEventArgs e)
         {
             this.MusicDB.Clear();
             this.SaveDownloadHistory();
         }
 
-        #endregion
+        /// <summary>
+        /// The button download on click event handler.
+        /// </summary>
+        /// <param name="sender">
+        /// The sender.
+        /// </param>
+        /// <param name="e">
+        /// The e.
+        /// </param>
+        private void BtnDownload_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new FolderBrowserDialog { ShowNewFolderButton = true };
+            var source = PresentationSource.FromVisual(this) as HwndSource;
+            var win = new OldWindow(source.Handle);
+            if (dlg.ShowDialog(win) != System.Windows.Forms.DialogResult.OK)
+            {
+                return;
+            }
 
+            this.DownloadFolder = dlg.SelectedPath;
+
+            this.bw.DoWork += (o, arg) =>
+                {
+                    while (!this.bw.CancellationPending)
+                    {
+                        this.DownloadMusic();
+                        if (this.DownloadingList.Count == 0)
+                        {
+                            this.RefreshList();
+                        }
+
+                        Thread.Sleep(100);
+                    }
+
+                    this.Dispatcher.Invoke(
+                        new Action(
+                            () =>
+                                {
+                                    this.btnCleanHistory.IsEnabled = true;
+                                    this.btnDownload.IsEnabled = true;
+                                    this.btnCancel.IsEnabled = false;
+                                }));
+                };
+            this.btnCancel.IsEnabled = true;
+            this.btnCleanHistory.IsEnabled = false;
+            this.btnDownload.IsEnabled = false;
+            this.bw.RunWorkerAsync();
+        }
+
+        /// <summary>
+        /// Download music.
+        /// </summary>
         private void DownloadMusic()
         {
             for (int i = 0; i < this.DownloadingList.Count; i++)
@@ -136,14 +204,16 @@ namespace DoubanMusicDownloader
                 }
 
                 Music music = this.DownloadingList[i];
-                WebClient client = new WebClient();
+                var client = new WebClient();
                 client.DownloadDataCompleted += (o, e) =>
                     {
                         try
                         {
                             byte[] raw = e.Result;
                             Directory.CreateDirectory(this.DownloadFolder);
-                            using (var fs = new FileStream(Path.Combine(this.DownloadFolder, music.FileName), FileMode.Create))
+                            using (
+                                var fs = new FileStream(
+                                    Path.Combine(this.DownloadFolder, music.FileName), FileMode.Create))
                             {
                                 fs.Write(raw, 0, raw.Length);
                             }
@@ -171,25 +241,49 @@ namespace DoubanMusicDownloader
                 Thread.Sleep(100);
             }
 
-            this.Dispatcher.Invoke(new Action(() => { DownloadingList.Clear(); }));
+            this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Clear(); }));
         }
 
-        private void RefleshList()
+        /// <summary>
+        /// Get music list.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="List"/>.
+        /// </returns>
+        private List<Music> GetMusicList()
         {
-            this.Dispatcher.Invoke(new Action(() => { DownloadingList.Clear(); }));
-            foreach (var music in this.GetMusicLst())
-            {
-                if (!this.MusicDB.Exists(p => p.Equals(music)))
-                {
-                    this.MusicDB.Add(music);
+            var list = new List<Music>();
 
-                    this.Dispatcher.Invoke(new Action(() => { DownloadingList.Add(music); }));
+            WebRequest request = WebRequest.Create(string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
+            request.Credentials = CredentialCache.DefaultCredentials;
+            WebResponse response = request.GetResponse();
+            using (var sr = new StreamReader(response.GetResponseStream()))
+            {
+                string json = sr.ReadToEnd();
+                dynamic musiList = JObject.Parse(json);
+
+                foreach (dynamic mu in musiList.song)
+                {
+                    var music = new Music
+                                    {
+                                        Url = mu.url, 
+                                        AlbumPicture = mu.picture, 
+                                        AlbumTitle = mu.albumtitle, 
+                                        Artist = mu.artist, 
+                                        Title = mu.title, 
+                                        PublicTime = mu.public_time, 
+                                        Publisher = mu.company
+                                    };
+                    list.Add(music);
                 }
             }
 
-            this.SaveDownloadHistory();
+            return list;
         }
 
+        /// <summary>
+        /// Load download history.
+        /// </summary>
         private void LoadDownloadHistory()
         {
             // Load stored download list
@@ -207,44 +301,37 @@ namespace DoubanMusicDownloader
             }
         }
 
+        /// <summary>
+        /// Refresh list.
+        /// </summary>
+        private void RefreshList()
+        {
+            this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Clear(); }));
+            foreach (Music music in this.GetMusicList())
+            {
+                if (!this.MusicDB.Exists(p => p.Equals(music)))
+                {
+                    this.MusicDB.Add(music);
+
+                    this.Dispatcher.Invoke(new Action(() => { this.DownloadingList.Add(music); }));
+                }
+            }
+
+            this.SaveDownloadHistory();
+        }
+
+        /// <summary>
+        /// The save download history.
+        /// </summary>
         private void SaveDownloadHistory()
         {
-            using (FileStream fs = new FileStream("musicdb.xml", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("musicdb.xml", FileMode.Create, FileAccess.Write))
             {
                 var x = new XmlSerializer(typeof(List<Music>));
                 x.Serialize(fs, this.MusicDB);
             }
         }
 
-        private List<Music> GetMusicLst()
-        {
-            List<Music> list = new List<Music>();
-
-            WebRequest request = WebRequest.Create(string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
-            request.Credentials = CredentialCache.DefaultCredentials;
-            WebResponse response = request.GetResponse();
-            using (StreamReader sr = new StreamReader(response.GetResponseStream()))
-            {
-                string json = sr.ReadToEnd();
-                dynamic musiList = JObject.Parse(json);
-
-                foreach (dynamic mu in musiList.song)
-                {
-                    Music music = new Music()
-                                      {
-                                          Url = mu.url,
-                                          AlbumPicture = mu.picture,
-                                          AlbumTitle = mu.albumtitle,
-                                          Artist = mu.artist,
-                                          Title = mu.title,
-                                          PublicTime = mu.public_time,
-                                          Publisher = mu.company
-                                      };
-                    list.Add(music);
-                }
-            }
-
-            return list;
-        }
+        #endregion
     }
 }

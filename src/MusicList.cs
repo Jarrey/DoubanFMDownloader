@@ -1,19 +1,15 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="MusicList.cs" company="">
-// TODO: Update copyright text.
-// </copyright>
-// -----------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <summary>
+//   The music list.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace DoubanMusicDownloader
 {
-    using System;
-    using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Linq;
-    using System.Text;
 
     /// <summary>
-    /// TODO: Update summary.
+    /// The music list.
     /// </summary>
     public class MusicList : ObservableCollection<Music>
     {

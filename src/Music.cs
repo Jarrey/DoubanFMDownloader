@@ -1,47 +1,60 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="Music.cs" company="">
-// TODO: Update copyright text.
-// </copyright>
-// -----------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <summary>
+//   The music.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace DoubanMusicDownloader
 {
-    using System;
-    using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
-    using System.Text;
 
     using DoubanMusicDownloader.Properties;
 
     /// <summary>
-    /// TODO: Update summary.
+    /// The music.
     /// </summary>
     public class Music : INotifyPropertyChanged
     {
-        public string Url { get; set; }
-        public string AlbumPicture { get; set; }
-        public string AlbumTitle { get; set; }
-        public string Title { get; set; }
-        public string Artist { get; set; }
-        public string PublicTime { get; set; }
-        public string Publisher { get; set; }
+        #region Fields
 
+        /// <summary>
+        /// The _progress.
+        /// </summary>
         private double _progress;
-        public double Progress
-        {
-            get
-            {
-                return _progress;
-            }
-            set
-            {
-                _progress = value;
-                this.OnPropertyChanged("Progress");
-            }
-        }
 
+        #endregion
+
+        #region Public Events
+
+        /// <summary>
+        /// The property changed.
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        #endregion
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets or sets the album picture.
+        /// </summary>
+        public string AlbumPicture { get; set; }
+
+        /// <summary>
+        /// Gets or sets the album title.
+        /// </summary>
+        public string AlbumTitle { get; set; }
+
+        /// <summary>
+        /// Gets or sets the artist.
+        /// </summary>
+        public string Artist { get; set; }
+
+        /// <summary>
+        /// Gets the file name.
+        /// </summary>
         public string FileName
         {
             get
@@ -51,13 +64,71 @@ namespace DoubanMusicDownloader
             }
         }
 
-        public override bool Equals(object obj)
+        /// <summary>
+        /// Gets or sets the progress.
+        /// </summary>
+        public double Progress
         {
-            return obj is Music &&
-                this.FileName == (obj as Music).FileName;
+            get
+            {
+                return this._progress;
+            }
+
+            set
+            {
+                this._progress = value;
+                this.OnPropertyChanged("Progress");
+            }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        /// <summary>
+        /// Gets or sets the public time.
+        /// </summary>
+        public string PublicTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the publisher.
+        /// </summary>
+        public string Publisher { get; set; }
+
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// Gets or sets the url.
+        /// </summary>
+        public string Url { get; set; }
+
+        #endregion
+
+        #region Public Methods and Operators
+
+        /// <summary>
+        /// The equals.
+        /// </summary>
+        /// <param name="obj">
+        /// The obj.
+        /// </param>
+        /// <returns>
+        /// The <see cref="bool"/>.
+        /// </returns>
+        public override bool Equals(object obj)
+        {
+            return obj is Music && this.FileName == (obj as Music).FileName;
+        }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// The on property changed.
+        /// </summary>
+        /// <param name="name">
+        /// The name.
+        /// </param>
         private void OnPropertyChanged(string name)
         {
             if (this.PropertyChanged != null)
@@ -65,5 +136,7 @@ namespace DoubanMusicDownloader
                 this.PropertyChanged(this, new PropertyChangedEventArgs(name));
             }
         }
+
+        #endregion
     }
 }

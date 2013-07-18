@@ -1,29 +1,56 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="OldWindow.cs" company="">
-// TODO: Update copyright text.
-// </copyright>
-// -----------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <summary>
+//   The old window.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace DoubanMusicDownloader
 {
     using System;
+    using System.Windows.Forms;
 
     /// <summary>
-    /// TODO: Update summary.
+    /// The old window.
     /// </summary>
-    public class OldWindow : System.Windows.Forms.IWin32Window
+    public class OldWindow : IWin32Window
     {
-        IntPtr _handle;
+        #region Fields
+
+        /// <summary>
+        /// The _handle.
+        /// </summary>
+        private readonly IntPtr _handle;
+
+        #endregion
+
+        #region Constructors and Destructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OldWindow"/> class.
+        /// </summary>
+        /// <param name="handle">
+        /// The handle.
+        /// </param>
         public OldWindow(IntPtr handle)
         {
-            _handle = handle;
+            this._handle = handle;
         }
-        #region IWin32Window Members
-        IntPtr System.Windows.Forms.IWin32Window.Handle
-        {
-            get { return _handle; }
-        }
-        #endregion
-    } 
 
+        #endregion
+
+        #region Explicit Interface Properties
+
+        /// <summary>
+        /// Gets the handle.
+        /// </summary>
+        IntPtr IWin32Window.Handle
+        {
+            get
+            {
+                return this._handle;
+            }
+        }
+
+        #endregion
+    }
 }
