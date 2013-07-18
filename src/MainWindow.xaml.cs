@@ -270,7 +270,7 @@ namespace DoubanMusicDownloader
                 WebRequest request = WebRequest.Create(
                     string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
                 request.Credentials = CredentialCache.DefaultCredentials;
-                request.Timeout = 5000;
+                request.Timeout = 10000;  // time out, 10s
                 WebResponse response = request.GetResponse();
                 using (var sr = new StreamReader(response.GetResponseStream()))
                 {
