@@ -156,7 +156,7 @@ namespace DoubanMusicDownloader
                             catch (Exception ex)
                             {
                                 this.Dispatcher.Invoke(new Action(() => MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error)));
-                                break;
+                                this.bw.CancelAsync();
                             }
                         }
 
@@ -187,7 +187,7 @@ namespace DoubanMusicDownloader
             {
                 while (TaskCount > Settings.Default.TaskCount)
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(500);
                 }
 
                 Music music = this.DownloadingList[i];
