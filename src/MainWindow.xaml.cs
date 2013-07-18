@@ -22,6 +22,8 @@ namespace DoubanMusicDownloader
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
+    using TagLib;
+
     using MessageBox = System.Windows.MessageBox;
 
     /// <summary>
@@ -198,12 +200,13 @@ namespace DoubanMusicDownloader
                         {
                             byte[] raw = e.Result;
                             Directory.CreateDirectory(this.DownloadFolder);
-                            using (
-                                var fs = new FileStream(
-                                    Path.Combine(this.DownloadFolder, music.FileName), FileMode.Create))
+                            string filePath = Path.Combine(this.DownloadFolder, music.FileName);
+                            using (var fs = new FileStream(filePath, FileMode.Create))
                             {
                                 fs.Write(raw, 0, raw.Length);
                             }
+
+                            this.SetMusicTag(music, filePath);
                         }
                         catch (Exception)
                         {
@@ -229,6 +232,38 @@ namespace DoubanMusicDownloader
             }
 
             this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Clear()));
+        }
+
+        /// <summary>
+        /// The set music tag.
+        /// </summary>
+        /// <param name="music">
+        /// The music.
+        /// </param>
+        /// <param name="musicFile">
+        /// The music file.
+        /// </param>
+        private void SetMusicTag(Music music, string musicFile)
+        {
+            try
+            {
+                using (TagLib.File f = TagLib.File.Create(musicFile))
+                {
+                    f.Tag.Title = music.Title;
+                    f.Tag.Album = music.AlbumTitle;
+                    f.Tag.Year = music.PublicTime;
+                    f.Tag.Performers = music.Artist.Split('_');
+
+                    var client = new WebClient();
+                    var pictureData = new ByteVector(client.DownloadData(music.AlbumPicture));
+                    f.Tag.Pictures = new IPicture[] { new Picture(pictureData) { Type = PictureType.FrontCover } };
+                    f.Save();
+                }
+            }
+            catch
+            {
+                // ignore exception on get response and parse json data
+            }
         }
 
         /// <summary>

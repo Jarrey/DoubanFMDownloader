@@ -84,7 +84,7 @@ namespace DoubanMusicDownloader
         /// <summary>
         /// Gets or sets the public time.
         /// </summary>
-        public string PublicTime { get; set; }
+        public uint PublicTime { get; set; }
 
         /// <summary>
         /// Gets or sets the publisher.
