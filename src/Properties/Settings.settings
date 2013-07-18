@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="DoubanMusicDownloader.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DoubanFMUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://douban.fm/j/mine/playlist?type=n&amp;channel={0}&amp;from=mainsite</Value>
+    </Setting>
+    <Setting Name="FileNameFormat" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">[{0}]-[{1}]-[{2}].mp3</Value>
+    </Setting>
+    <Setting Name="TaskCount" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
