@@ -79,30 +79,6 @@ namespace DoubanMusicDownloader
         #region Public Properties
 
         /// <summary>
-        /// Gets the channels.
-        /// </summary>
-        public List<Channel> Channels
-        {
-            get
-            {
-                return new List<Channel>
-                           {
-                               new Channel(0, "公共 MHz"), 
-                               new Channel(1, "华语 MHz"), 
-                               new Channel(2, "欧美 MHz"), 
-                               new Channel(3, "70 MHz"), 
-                               new Channel(4, "80 MHz"), 
-                               new Channel(5, "90 MHz"), 
-                               new Channel(6, "粤语 MHz"), 
-                               new Channel(7, "摇滚 MHz"), 
-                               new Channel(8, "民谣 MHz"), 
-                               new Channel(9, "轻音乐 MHz"), 
-                               new Channel(10, "电影原声 MHz")
-                           };
-            }
-        }
-
-        /// <summary>
         /// Gets or sets the downloading list.
         /// </summary>
         public MusicList DownloadingList { get; set; }
