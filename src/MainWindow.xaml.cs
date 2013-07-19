@@ -55,7 +55,7 @@ namespace DoubanMusicDownloader
         /// <summary>
         /// The music db.
         /// </summary>
-        private Dictionary<string, Music> MusicDB;
+        private List<string> MusicDB;
 
         #endregion
 
@@ -335,13 +335,13 @@ namespace DoubanMusicDownloader
                                 TypeNameHandling = TypeNameHandling.All,
                                 TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
                             });
-                        this.MusicDB = (Dictionary<string, Music>)c ?? new Dictionary<string, Music>();
+                        this.MusicDB = (List<string>)c ?? new List<string>();
                     }
                 }
             }
             catch (Exception)
             {
-                this.MusicDB = new Dictionary<string, Music>();
+                this.MusicDB = new List<string>();
             }
         }
 
@@ -355,9 +355,9 @@ namespace DoubanMusicDownloader
             var musicList = this.GetMusicList();
             foreach (Music music in musicList)
             {
-                if (!this.MusicDB.ContainsKey(music.FileName))
+                if (!this.MusicDB.Contains(music.FileName))
                 {
-                    this.MusicDB.Add(music.FileName, music);
+                    this.MusicDB.Add(music.FileName);
 
                     this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Add(music)));
                 }
