@@ -36,7 +36,7 @@ namespace DoubanMusicDownloader
         /// <summary>
         /// The task count.
         /// </summary>
-        private static int TaskCount;
+        private static int TaskCount = 0;
 
         #endregion
 
@@ -134,7 +134,7 @@ namespace DoubanMusicDownloader
         /// </param>
         private void BtnDownload_OnClick(object sender, RoutedEventArgs e)
         {
-            var dlg = new FolderBrowserDialog { ShowNewFolderButton = true };
+            var dlg = new FolderBrowserDialog { ShowNewFolderButton = true, SelectedPath = DownloadFolder };
             var source = PresentationSource.FromVisual(this) as HwndSource;
             var win = new OldWindow(source.Handle);
             if (dlg.ShowDialog(win) != System.Windows.Forms.DialogResult.OK)
@@ -192,6 +192,7 @@ namespace DoubanMusicDownloader
                     Thread.Sleep(500);
                 }
 
+                TaskCount++;
                 Music music = this.DownloadingList[i];
                 var client = new WebClient();
                 client.DownloadDataCompleted += (o, e) =>
@@ -223,7 +224,6 @@ namespace DoubanMusicDownloader
                     };
                 client.DownloadProgressChanged += (o, e) => { music.Progress = e.ProgressPercentage; };
                 client.DownloadDataAsync(new Uri(music.Url));
-                TaskCount++;
             }
 
             while (TaskCount > 0)
@@ -267,6 +267,27 @@ namespace DoubanMusicDownloader
         }
 
         /// <summary>
+        /// Refresh list.
+        /// </summary>
+        private void RefreshList()
+        {
+            this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Clear()));
+
+            var musicList = this.GetMusicList();
+            foreach (Music music in musicList)
+            {
+                if (!this.MusicDB.Contains(music.FileName))
+                {
+                    this.MusicDB.Add(music.FileName);
+
+                    this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Add(music)));
+                }
+            }
+
+            this.SaveDownloadHistory();
+        }
+
+        /// <summary>
         /// Get music list.
         /// </summary>
         /// <returns>
@@ -282,7 +303,25 @@ namespace DoubanMusicDownloader
                     string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
                 request.Credentials = CredentialCache.DefaultCredentials;
                 request.Timeout = 10000;  // time out, 10s
-                WebResponse response = request.GetResponse();
+
+                // get the music list from douban.fm
+                // try Settings.ReDo times
+                int round = 1;
+                WebResponse response = null;
+                while (true)
+                {
+                    try
+                    {
+                        response = request.GetResponse();
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (round > Settings.Default.ReDo) throw ex;
+                        round++;
+                    }
+                }
+
                 using (var sr = new StreamReader(response.GetResponseStream()))
                 {
                     string json = sr.ReadToEnd();
@@ -346,27 +385,6 @@ namespace DoubanMusicDownloader
         }
 
         /// <summary>
-        /// Refresh list.
-        /// </summary>
-        private void RefreshList()
-        {
-            this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Clear()));
-
-            var musicList = this.GetMusicList();
-            foreach (Music music in musicList)
-            {
-                if (!this.MusicDB.Contains(music.FileName))
-                {
-                    this.MusicDB.Add(music.FileName);
-
-                    this.Dispatcher.Invoke(new Action(() => this.DownloadingList.Add(music)));
-                }
-            }
-
-            this.SaveDownloadHistory();
-        }
-
-        /// <summary>
         /// The save download history.
         /// </summary>
         private void SaveDownloadHistory()
@@ -387,7 +405,7 @@ namespace DoubanMusicDownloader
                 }
             }
         }
-
+       
         #endregion
     }
 }

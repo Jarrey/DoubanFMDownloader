@@ -49,5 +49,14 @@ namespace DoubanMusicDownloader.Properties {
                 return ((int)(this["TaskCount"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int ReDo {
+            get {
+                return ((int)(this["ReDo"]));
+            }
+        }
     }
 }
