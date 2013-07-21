@@ -329,16 +329,7 @@ namespace DoubanMusicDownloader
 
                     foreach (dynamic mu in musicList.song)
                     {
-                        var music = new Music
-                                        {
-                                            Url = mu.url,
-                                            AlbumPicture = mu.picture,
-                                            AlbumTitle = mu.albumtitle,
-                                            Artist = mu.artist,
-                                            Title = mu.title,
-                                            PublicTime = mu.public_time,
-                                            Publisher = mu.company
-                                        };
+                        var music = new Music(mu);
                         list.Add(music);
                     }
                 }
@@ -347,7 +338,7 @@ namespace DoubanMusicDownloader
             {
                 throw e;
             }
-            catch
+            catch (Exception e)
             {
                 // ignore exception on get response and parse json data
             }
@@ -405,7 +396,7 @@ namespace DoubanMusicDownloader
                 }
             }
         }
-       
+
         #endregion
     }
 }

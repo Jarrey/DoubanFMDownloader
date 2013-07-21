@@ -63,6 +63,8 @@ namespace DoubanMusicDownloader
                                new Channel(19, "Puma MHz"),
                                new Channel(20, "女生 MHz"),
                                new Channel(22, "法语 MHz"),
+                               new Channel(32, "咖啡 MHz"),
+                               new Channel(27, "古典 MHz"),
                                new Channel(26, "豆瓣音乐人 MHz"),
                                new Channel(30, "BMW MHz")
                            };
