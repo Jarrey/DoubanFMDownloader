@@ -17,14 +17,15 @@ namespace DoubanMusicDownloader
     using System.Windows.Forms;
     using System.Windows.Interop;
 
-    using DoubanMusicDownloader.Properties;
-
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     using TagLib;
 
     using MessageBox = System.Windows.MessageBox;
+    using System.Collections.Concurrent;
+    using Microsoft.Win32;
+    using Properties;
 
     /// <summary>
     /// Interaction logic for MainWindow
@@ -56,6 +57,8 @@ namespace DoubanMusicDownloader
         /// The music db.
         /// </summary>
         private List<string> MusicDB;
+
+        private ConcurrentDictionary<string, string> MimeTypeToExtension = new ConcurrentDictionary<string, string>();
 
         #endregion
 
@@ -199,15 +202,20 @@ namespace DoubanMusicDownloader
                     {
                         try
                         {
-                            byte[] raw = e.Result;
-                            Directory.CreateDirectory(this.DownloadFolder);
-                            string filePath = Path.Combine(this.DownloadFolder, music.FileName);
-                            using (var fs = new FileStream(filePath, FileMode.Create))
+                            WebClient webClient = o as WebClient;
+                            if (webClient != null)
                             {
-                                fs.Write(raw, 0, raw.Length);
-                            }
+                                string extension = this.ConvertMimeTypeToExtension(webClient.ResponseHeaders["Content-Type"]);
+                                byte[] raw = e.Result;
+                                Directory.CreateDirectory(this.DownloadFolder);
+                                string filePath = Path.Combine(this.DownloadFolder, music.FileName + extension);
+                                using (var fs = new FileStream(filePath, FileMode.Create))
+                                {
+                                    fs.Write(raw, 0, raw.Length);
+                                }
 
-                            this.SetMusicTag(music, filePath);
+                                this.SetMusicTag(music, filePath);
+                            }
                         }
                         catch (Exception)
                         {
@@ -299,10 +307,11 @@ namespace DoubanMusicDownloader
 
             try
             {
-                WebRequest request = WebRequest.Create(
-                    string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(string.Format(Settings.Default.DoubanFMUrl, this.SelectedChannel));
+                request.Method = "GET";
+                request.UserAgent = Settings.Default.UserAgent;
                 request.Credentials = CredentialCache.DefaultCredentials;
-                request.Timeout = 10000;  // time out, 10s
+                request.Timeout = 30000;  // time out, 10s
 
                 // get the music list from douban.fm
                 // try Settings.ReDo times
@@ -358,14 +367,8 @@ namespace DoubanMusicDownloader
                 {
                     using (TextReader tr = new StreamReader(fs))
                     {
-                        object c = JsonConvert.DeserializeObject(
-                            tr.ReadToEnd(),
-                            new JsonSerializerSettings
-                            {
-                                TypeNameHandling = TypeNameHandling.All,
-                                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
-                            });
-                        this.MusicDB = (List<string>)c ?? new List<string>();
+                        object c = JsonConvert.DeserializeObject(tr.ReadToEnd());
+                        this.MusicDB = (c as JArray).ToObject<List<string>>() ?? new List<string>();
                     }
                 }
             }
@@ -382,21 +385,34 @@ namespace DoubanMusicDownloader
         {
             using (var fs = new FileStream("musicdb", FileMode.Create, FileAccess.Write))
             {
-                string json = JsonConvert.SerializeObject(
-                    this.MusicDB,
-                    Formatting.Indented,
-                    new JsonSerializerSettings
-                    {
-                        TypeNameHandling = TypeNameHandling.All,
-                        TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
-                    });
+                string json = JsonConvert.SerializeObject(MusicDB);
                 using (TextWriter tw = new StreamWriter(fs))
                 {
                     tw.Write(json);
                 }
             }
         }
+        private string ConvertMimeTypeToExtension(string mimeType)
+        {
+            if (string.IsNullOrWhiteSpace(mimeType))
+            { 
+                throw new ArgumentNullException("mimeType");
+            }
 
+            string index = string.Format(@"MIME\Database\Content Type\{0}", mimeType);
+            string extension;
+            if (this.MimeTypeToExtension.TryGetValue(index, out extension))
+            {
+                return extension;
+            }
+            
+            RegistryKey registryKey = Registry.ClassesRoot.OpenSubKey(index, false);
+            object obj = registryKey != null ? registryKey.GetValue("Extension", null) : "." + mimeType.Split('/')[1];
+            extension = obj != null ? obj.ToString() : string.Empty;
+            this.MimeTypeToExtension[index] = extension;
+            return extension;
+
+        }
         #endregion
     }
 }

@@ -43,6 +43,7 @@ namespace DoubanMusicDownloader
             {
                 return new List<Channel>
                            {
+                               new Channel(-10, "豆瓣精选"),
                                new Channel(0, "公共 MHz"), 
                                new Channel(1, "华语 MHz"), 
                                new Channel(2, "欧美 MHz"), 
