@@ -53,7 +53,7 @@
 
             <StackPanel>
                 <TextBlock Text="Channel: " VerticalAlignment="Top" Margin="4"/>
-                <ComboBox ItemsSource="{Binding ., Source={x:Static doubanMusicDownloader:Channel.Channels}}" SelectedValue="{Binding SelectedChannel}"
+                <ComboBox ItemsSource="{Binding Channels, Mode=OneWay}" IsSynchronizedWithCurrentItem="true" SelectedValue="{Binding SelectedChannel}"
                           DisplayMemberPath="Name" SelectedValuePath="Id" SelectedIndex="0" Margin="4"/>
             </StackPanel>
             

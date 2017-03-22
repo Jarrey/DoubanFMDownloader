@@ -36,14 +36,13 @@ namespace DoubanMusicDownloader
         /// </param>
         public Music(JObject music)
         {
-            this._music = music;
-            this.Url = this.Parse<string>("url");
-            this.AlbumPicture = this.Parse<string>("picture");
-            this.AlbumTitle = this.Parse<string>("albumtitle");
-            this.Artist = this.Parse<string>("artist");
-            this.Title = this.Parse<string>("title");
-            this.PublicTime = this.Parse<uint>("public_time");
-            this.Publisher = this.Parse<string>("company");
+            this.Url = Utils.Parse<string>(music, "url");
+            this.AlbumPicture = Utils.Parse<string>(music, "picture");
+            this.AlbumTitle = Utils.Parse<string>(music, "albumtitle");
+            this.Artist = Utils.Parse<string>(music, "artist");
+            this.Title = Utils.Parse<string>(music, "title");
+            this.PublicTime = Utils.Parse<uint>(music, "public_time");
+            this.Publisher = Utils.Parse<string>(music, "company");
         }
 
         #endregion
@@ -54,9 +53,7 @@ namespace DoubanMusicDownloader
         /// The _progress.
         /// </summary>
         private double _progress;
-
-        private JObject _music;
-
+        
         #endregion
 
         #region Public Events
@@ -168,36 +165,6 @@ namespace DoubanMusicDownloader
             {
                 this.PropertyChanged(this, new PropertyChangedEventArgs(name));
             }
-        }
-
-        /// <summary>
-        /// The parse.
-        /// </summary>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <typeparam name="T">
-        /// The type want to get value
-        /// </typeparam>
-        /// <returns>
-        /// The <see cref="T"/>.
-        /// </returns>
-        private T Parse<T>(string propertyName)
-        {
-            try
-            {
-                JToken value;
-                if (this._music != null && this._music.TryGetValue(propertyName, out value))
-                {
-                    var returnValue = value.Value<T>();
-                    return returnValue;
-                }
-            }
-            catch (Exception)
-            {
-            }
-
-            return default(T);
         }
 
         #endregion

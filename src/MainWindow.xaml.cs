@@ -26,6 +26,7 @@ namespace DoubanMusicDownloader
     using System.Collections.Concurrent;
     using Microsoft.Win32;
     using Properties;
+    using System.Collections.ObjectModel;
 
     /// <summary>
     /// Interaction logic for MainWindow
@@ -59,7 +60,7 @@ namespace DoubanMusicDownloader
         private List<string> MusicDB;
 
         private ConcurrentDictionary<string, string> MimeTypeToExtension = new ConcurrentDictionary<string, string>();
-
+        
         #endregion
 
         #region Constructors and Destructors
@@ -76,6 +77,8 @@ namespace DoubanMusicDownloader
 
             this.btnDownload.IsEnabled = true;
             this.btnCancel.IsEnabled = false;
+
+            this.LoadChannels();
             this.LoadDownloadHistory();
         }
 
@@ -87,6 +90,8 @@ namespace DoubanMusicDownloader
         /// Gets or sets the downloading list.
         /// </summary>
         public MusicList DownloadingList { get; set; }
+
+        public ObservableCollection<Channel> Channels { get; private set; }
 
         /// <summary>
         /// Gets or sets the selected channel.
@@ -181,6 +186,64 @@ namespace DoubanMusicDownloader
             this.btnCleanHistory.IsEnabled = false;
             this.btnDownload.IsEnabled = false;
             this.bw.RunWorkerAsync();
+        }
+
+        private void LoadChannels()
+        {
+            if (Channels == null)
+            {
+                Channels = new ObservableCollection<Channel>();
+            }
+
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Settings.Default.ChannelsUrl);
+                request.Method = "GET";
+                request.UserAgent = Settings.Default.UserAgent;
+                request.Credentials = CredentialCache.DefaultCredentials;
+                request.Timeout = 30000;  // time out, 10s
+
+                // get the channel list from douban.fm
+                // try Settings.ReDo times
+                int round = 1;
+                WebResponse response = null;
+                while (true)
+                {
+                    try
+                    {
+                        response = request.GetResponse();
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (round > Settings.Default.ReDo) throw ex;
+                        round++;
+                    }
+                }
+
+                using (var sr = new StreamReader(response.GetResponseStream()))
+                {
+                    string json = sr.ReadToEnd();
+                    dynamic channelcList = JObject.Parse(json);
+
+                    foreach (dynamic gp in channelcList.groups)
+                    {
+                        foreach (dynamic ch in gp.chls)
+                        {
+                            var channel = new Channel(ch);
+                            Channels.Add(channel);
+                        }
+                    }
+                }
+            }
+            catch (WebException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                // ignore exception on get response and parse json data
+            }
         }
 
         /// <summary>
@@ -413,6 +476,7 @@ namespace DoubanMusicDownloader
             return extension;
 
         }
+
         #endregion
     }
 }

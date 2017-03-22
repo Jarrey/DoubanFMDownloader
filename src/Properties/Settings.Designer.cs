@@ -25,15 +25,6 @@ namespace DoubanMusicDownloader.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("[{0}]-[{1}]-[{2}].mp3")]
-        public string FileNameFormat {
-            get {
-                return ((string)(this["FileNameFormat"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("5")]
         public int TaskCount {
             get {
@@ -66,6 +57,24 @@ namespace DoubanMusicDownloader.Properties {
         public string UserAgent {
             get {
                 return ((string)(this["UserAgent"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("[{0}]-[{1}]-[{2}]")]
+        public string FileNameFormat {
+            get {
+                return ((string)(this["FileNameFormat"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.douban.com/v2/fm/app_channels")]
+        public string ChannelsUrl {
+            get {
+                return ((string)(this["ChannelsUrl"]));
             }
         }
     }
